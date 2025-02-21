@@ -15,7 +15,11 @@ Note: to run the script, you need to install tensorflow_datasets:
 
 You can download the raw Libero datasets from https://huggingface.co/datasets/openvla/modified_libero_rlds
 The resulting dataset will get saved to the $LEROBOT_HOME directory.
+
+export LEROBOT_HOME=/root/autodl-tmp/
+export HF_HOME=/root/autodl-tmp/
 Running this conversion script will take approximately 30 minutes.
+
 """
 
 import shutil
@@ -25,12 +29,9 @@ from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
 import tensorflow_datasets as tfds
 import tyro
 
-REPO_NAME = "your_hf_username/libero"  # Name of the output dataset, also used for the Hugging Face Hub
+REPO_NAME = "Loki0929/pi0_ur5"  # Name of the output dataset, also used for the Hugging Face Hub
 RAW_DATASET_NAMES = [
-    "libero_10_no_noops",
-    "libero_goal_no_noops",
-    "libero_object_no_noops",
-    "libero_spatial_no_noops",
+    "pi0_ur5",
 ]  # For simplicity we will combine multiple Libero datasets into one training dataset
 
 
@@ -45,22 +46,22 @@ def main(data_dir: str, *, push_to_hub: bool = False):
     # LeRobot assumes that dtype of image data is `image`
     dataset = LeRobotDataset.create(
         repo_id=REPO_NAME,
-        robot_type="panda",
+        robot_type="ur5",
         fps=10,
         features={
             "image": {
                 "dtype": "image",
-                "shape": (256, 256, 3),
+                "shape": (1080, 1920, 3),
                 "names": ["height", "width", "channel"],
             },
             "wrist_image": {
                 "dtype": "image",
-                "shape": (256, 256, 3),
+                "shape": (480, 640, 3),
                 "names": ["height", "width", "channel"],
             },
             "state": {
                 "dtype": "float32",
-                "shape": (8,),
+                "shape": (7,),
                 "names": ["state"],
             },
             "actions": {
@@ -95,7 +96,7 @@ def main(data_dir: str, *, push_to_hub: bool = False):
     # Optionally push to the Hugging Face Hub
     if push_to_hub:
         dataset.push_to_hub(
-            tags=["libero", "panda", "rlds"],
+            tags=["pi0", "ur5", "rlds"],
             private=False,
             push_videos=True,
             license="apache-2.0",

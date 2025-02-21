@@ -1,3 +1,4 @@
+#XLA_PYTHON_CLIENT_MEM_FRACTION=0.9 uv run scripts/train.py pi0_libero_ur5_lora --exp-name=pi0_base_ur5_lora --overwrite
 import dataclasses
 import functools
 import logging

@@ -1,0 +1,1 @@
+uv run scripts/serve_policy.py policy:checkpoint --policy.config=pi0_libero_ur5_lora --policy.dir=/root/autodl-tmp/checkpoints/pi0_libero_ur5_lora/pi0_base_ur5_lora/20000/
