@@ -18,11 +18,18 @@ def make_libero_example() -> dict:
 
 
 def _parse_image(image) -> np.ndarray:
+    """Helper function to parse image arrays."""
     image = np.asarray(image)
     if np.issubdtype(image.dtype, np.floating):
         image = (255 * image).astype(np.uint8)
     if image.shape[0] == 3:
         image = einops.rearrange(image, "c h w -> h w c")
+    # Ensure image has 3 channels if it's grayscale (e.g., shape (H, W))
+    if image.ndim == 2:
+        image = np.stack([image] * 3, axis=-1)
+    # Ensure image has HWC format and 3 channels
+    if image.shape[-1] != 3:
+       raise ValueError(f"Expected image with 3 channels (H, W, 3), got shape {image.shape}")
     return image
 
 
@@ -57,29 +64,48 @@ class LiberoInputs(transforms.DataTransformFn):
         # Possibly need to parse images to uint8 (H,W,C) since LeRobot automatically
         # stores as float32 (C,H,W), gets skipped for policy inference.
         # Keep this for your own dataset, but if your dataset stores the images
-        # in a different key than "observation/image" or "observation/wrist_image",
-        # you should change it below.
-        # Pi0 models support three image inputs at the moment: one third-person view,
-        # and two wrist views (left and right). If your dataset does not have a particular type
-        # of image, e.g. wrist images, you can comment it out here and replace it with zeros like we do for the
+        # in a different key than the ones used below, you should change it below.
+        # Pi0 models support multiple image inputs. Define the keys based on your setup.
+        # If your dataset does not have a particular type of image (e.g. a specific wrist view),
+        # you can comment it out here and replace it with zeros like we do for the
         # right wrist image below.
+
+        # --- Process Base Image (from "observation/image") ---
+        # Assumes this corresponds to the "base_0_rgb" input for the model.
         base_image = _parse_image(data["observation/image"])
+
+        # --- Process Wrist Image (from "observation/wrist_image") ---
+        # Assumes this corresponds to the "left_wrist_0_rgb" input for the model.
         wrist_image = _parse_image(data["observation/wrist_image"])
 
+        # --- Process Third Image (from "observation/third") ---
+        # Assumes this corresponds to a "third_0_rgb" input for the model.
+        # Ensure your model configuration expects this key if it's not standard.
+        third_image = _parse_image(data["observation/third"])
+
+
         # Create inputs dict. Do not change the keys in the dict below.
+
         inputs = {
             "state": state,
             "image": {
                 "base_0_rgb": base_image,
                 "left_wrist_0_rgb": wrist_image,
+                # "third_0_rgb": third_image, # Added the third image here
                 # Pad any non-existent images with zero-arrays of the appropriate shape.
-                "right_wrist_0_rgb": np.zeros_like(base_image),
+                # Example: If the model expects a right_wrist view but you don't have one.
+                # "right_wrist_0_rgb": np.zeros_like(base_image),
+                "right_wrist_0_rgb": third_image,
+
             },
             "image_mask": {
                 "base_0_rgb": np.True_,
                 "left_wrist_0_rgb": np.True_,
+                # "third_0_rgb": np.True_, # Added mask for the third image (it exists)
                 # Mask any non-existent images with False (if ``mask_padding`` is True).
-                "right_wrist_0_rgb": np.False_ if mask_padding else np.True_,
+                # "right_wrist_0_rgb": np.False_ if mask_padding else np.True_,
+                "right_wrist_0_rgb": np.True_,
+
             },
         }
 
@@ -114,4 +140,4 @@ class LiberoOutputs(transforms.DataTransformFn):
         # dimension, we need to now parse out the correct number of actions in the return dict.
         # For Libero, we only return the first 7 actions (since the rest is padding).
         # For your own dataset, replace `7` with the action dimension of your dataset.
-        return {"actions": np.asarray(data["actions"][:, :7])}
+        return {"actions": np.asarray(data["actions"][:, :6])}
