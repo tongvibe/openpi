@@ -10,7 +10,7 @@ from openpi.policies import policy_config as _policy_config
 from openpi.serving import websocket_policy_server
 from openpi.training import config as _config
 
-
+###uv run scripts/serve_policy.py policy:checkpoint --policy.config=so100_base_lora --policy.dir=/root/autodl-tmp/checkpoints/so100_base_lora/so100_base_lora/29999/
 class EnvMode(enum.Enum):
     """Supported environments."""
 
@@ -47,7 +47,7 @@ class Args:
     default_prompt: str | None = None
 
     # Port to serve the policy on.
-    port: int = 8000
+    port: int = 6006
     # Record the policy's behavior for debugging.
     record: bool = False
 
@@ -70,8 +70,8 @@ DEFAULT_CHECKPOINT: dict[EnvMode, Checkpoint] = {
         dir="s3://openpi-assets/checkpoints/pi0_fast_droid",
     ),
     EnvMode.LIBERO: Checkpoint(
-        config="pi0_fast_libero",
-        dir="s3://openpi-assets/checkpoints/pi0_fast_libero",
+        config="so100_base_lora",
+        dir="/root/autodl-tmp/checkpoints/so100_base_lora/so100_base_lora/29999",
     ),
 }
 

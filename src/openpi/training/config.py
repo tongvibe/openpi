@@ -82,7 +82,7 @@ class DataConfig:
     # Names of keys that will be used by the data loader to generate the action sequence. The length of the
     # sequence is defined by the `action_horizon` field in the model config. This should be adjusted if your
     # LeRobot dataset is using different keys to represent the action.
-    action_sequence_keys: Sequence[str] = ("actions",)
+    action_sequence_keys: Sequence[str] = ("action",)
 
     # If true, will use the LeRobot dataset task to define the prompt.
     prompt_from_task: bool = False
@@ -271,10 +271,11 @@ class LeRobotLiberoDataConfig(DataConfigFactory):
             inputs=[
                 _transforms.RepackTransform(
                     {
-                        "observation/image": "image",
-                        "observation/wrist_image": "wrist_image",
-                        "observation/state": "state",
-                        "actions": "actions",
+                        "observation/image": "observation.images.top",
+                        "observation/third": "observation.images.third",
+                        "observation/wrist_image": "observation.images.wrist",
+                        "observation/state": "observation.state",
+                        "actions": "action",
                         "prompt": "prompt",
                     }
                 )
@@ -353,7 +354,7 @@ class TrainConfig:
     # Base directory for config assets (e.g., norm stats).
     assets_base_dir: str = "./assets"
     # Base directory for checkpoints.
-    checkpoint_base_dir: str = "./checkpoints"
+    checkpoint_base_dir: str = "/root/autodl-tmp/checkpoints"
 
     # Random seed that will be used by random generators during training.
     seed: int = 42
@@ -480,7 +481,7 @@ _CONFIGS = [
     # the comments below.
     TrainConfig(
         # Change the name to reflect your model and dataset.
-        name="pi0_libero",
+        name="so100_base_full",
         # Here you define the model config -- In this example we use pi0 as the model
         # architecture and perform *full* finetuning. in the examples below we show how to modify
         # this to perform *low-memory* (LORA) finetuning and use pi0-FAST as an alternative architecture.
@@ -489,7 +490,7 @@ _CONFIGS = [
         # dataset. For your own dataset, you can change the repo_id to point to your dataset.
         # Also modify the DataConfig to use the new config you made for your dataset above.
         data=LeRobotLiberoDataConfig(
-            repo_id="physical-intelligence/libero",
+            repo_id="Loki0929/so100_duck_v20_full_parquet_with_images",
             base_config=DataConfig(
                 local_files_only=False,  # Set to True for local-only datasets.
                 # This flag determines whether we load the prompt (i.e. the task instruction) from the
@@ -506,11 +507,11 @@ _CONFIGS = [
         num_train_steps=30_000,
     ),
     TrainConfig(
-        name="pi0_libero_low_mem_finetune",
+        name="so100_base_lora",
         # Here is an example of loading a pi0 model for LoRA fine-tuning.
         model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"),
         data=LeRobotLiberoDataConfig(
-            repo_id="physical-intelligence/libero",
+            repo_id="Loki0929/so100_duck_v20_full_parquet_with_images",
             base_config=DataConfig(
                 local_files_only=False,  # Set to True for local-only datasets.
                 prompt_from_task=True,
